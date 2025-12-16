@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare ML System</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Forms */
+        .form-section {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        /* Results */
+        .result-box {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            display: none;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            color: #64748b;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🏥 Healthcare ML Dashboard</h1>
+            <p>End-to-End Readmission & Length of Stay Prediction</p>
+        </header>
+
+        <div class="stats-grid">
+            <div class="card">
+                <div class="stat-value" id="acc-val">Loading...</div>
+                <div class="stat-label">Classification Accuracy</div>
+            </div>
+            <div class="card">
+                <div class="stat-value" id="rmse-val">Loading...</div>
+                <div class="stat-label">Regression RMSE (Days)</div>
+            </div>
+            <a href="/validation" target="_blank" style="text-decoration: none;">
+                <div class="card" style="background: #f0fdf4; border: 1px solid #bbf7d0; cursor: pointer;">
+                    <div class="stat-value" style="color: #16a34a;">Valid</div>
+                    <div class="stat-label">Data Validation Report ↗</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="form-section">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('clf')">Readmission</div>
+                <div class="tab" onclick="switchTab('reg')">Length of Stay</div>
+                <div class="tab" onclick="switchTab('cluster')">Patient Segmentation</div>
+                <div class="tab" onclick="switchTab('forecast')">Admission Forecast</div>
+            </div>
+
+            <!-- Classification Form -->
+            <div id="clf" class="tab-content active">
+                <form id="clf-form" onsubmit="predict('readmission', 'clf-form', 'clf-result'); return false;">
+                    <div class="form-group"><label>Age Group</label><select name="age">
+                            <option>[0-10)</option>
+                            <option>[50-60)</option>
+                            <option>[70-80)</option>
+                        </select></div>
+                    <div class="form-group"><label>Gender</label><select name="gender">
+                            <option>Female</option>
+                            <option>Male</option>
+                        </select></div>
+                    <div class="form-group"><label>Diabetes Med</label><select name="diabetesMed">
+                            <option>Yes</option>
+                            <option>No</option>
+                        </select></div>
+                    <button type="submit">Predict Readmission Risk</button>
+                    <div id="clf-result" class="result-box"></div>
+                </form>
+            </div>
+
+            <!-- Regression Form -->
+            <div id="reg" class="tab-content">
+                <form id="reg-form" onsubmit="predict('los', 'reg-form', 'reg-result'); return false;">
+                    <div class="form-group"><label>Number of Lab Procedures</label><input type="number"
+                            name="num_lab_procedures" value="40"></div>
+                    <div class="form-group"><label>Number of Medications</label><input type="number"
+                            name="num_medications" value="15"></div>
+                    <div class="form-group"><label>Number of Diagnoses</label><input type="number"
+                            name="number_diagnoses" value="5"></div>
+                    <button type="submit">Predict Length of Stay</button>
+                    <div id="reg-result" class="result-box"></div>
+                </form>
+            </div>
+
+            <!-- Clustering Form -->
+            <div id="cluster" class="tab-content">
+                <p style="color: #64748b; margin-bottom: 1rem;">Segment patients into risk profiles based on
+                    demographics and history.</p>
+                <form id="cluster-form" onsubmit="predict('cluster', 'cluster-form', 'cluster-result'); return false;">
+                    <div class="form-group"><label>Number of Lab Procedures</label><input type="number"
+                            name="num_lab_procedures" value="40"></div>
+                    <div class="form-group"><label>Number of Medications</label><input type="number"
+                            name="num_medications" value="15"></div>
+                    <button type="submit">Identify Patient Segment</button>
+                    <div id="cluster-result" class="result-box"></div>
+                </form>
+            </div>
+
+            <!-- Forecasting Tab -->
+            <div id="forecast" class="tab-content">
+                <p style="color: #64748b; margin-bottom: 1rem;">Forecast hospital admissions for the next 12 months.</p>
+                <button onclick="loadForecast()">Load Forecast</button>
+                <div style="margin-top: 2rem; height: 300px;">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Load Metrics on Start
+        fetch('/metrics').then(r => r.json()).then(data => {
+            document.getElementById('acc-val').textContent = (data.accuracy * 100).toFixed(1) + '%';
+            document.getElementById('rmse-val').textContent = data.rmse.toFixed(2);
+        });
+
+        function switchTab(id) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function predict(endpoint, formId, resultId) {
+            const form = document.getElementById(formId);
+            const formData = new FormData(form);
+            const data = {};
+            // Add defaults for missing fields that Pydantic expects
+            const defaults = {
+                race: "Caucasian", gender: "Female", age: "[50-60)", admission_type_id: 1,
+                discharge_disposition_id: 1, admission_source_id: 7, time_in_hospital: 3,
+                num_lab_procedures: 40, num_procedures: 0, num_medications: 15,
+                number_outpatient: 0, number_emergency: 0, number_inpatient: 0,
+                number_diagnoses: 5, diabetesMed: "Yes", change: "Ch"
+            };
+
+            // Merge defaults with form data
+            Object.assign(data, defaults);
+            formData.forEach((value, key) => data[key] = value);
+
+            const resBox = document.getElementById(resultId);
+            resBox.style.display = 'block';
+            resBox.innerHTML = 'Predicting...';
+
+            try {
+                const response = await fetch(`/predict/${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                // Format Output
+                let html = '';
+                if (endpoint === 'readmission') {
+                    const isRisk = result.prediction === 'YES';
+                    const color = isRisk ? '#ef4444' : '#10b981';
+                    const text = isRisk ? 'High Risk of Readmission' : 'Low Risk of Readmission';
+                    // Probabilities: [No, Yes]
+                    const riskProb = (result.probabilities[1] * 100).toFixed(1);
+
+                    html = `<div style="text-align: center;"><h3 style="color: ${color}; margin-bottom: 0.5rem;">${text}</h3><div style="font-size: 3rem; font-weight: bold; color: ${color};">${riskProb}%</div><p style="color: #64748b;">Probability</p></div>`;
+                } else if (endpoint === 'los') {
+                    const days = result.predicted_time_in_hospital.toFixed(1);
+                    html = `<div style="text-align: center;"><h3 style="color: #2563eb; margin-bottom: 0.5rem;">Estimated Stay</h3><div style="font-size: 3rem; font-weight: bold; color: #2563eb;">${days} <span style="font-size: 1.5rem;">Days</span></div></div>`;
+                } else if (endpoint === 'cluster') {
+                    html = `<div style="text-align: center;"><h3 style="color: #8b5cf6; margin-bottom: 0.5rem;">Patient Segment</h3><div style="font-size: 2rem; font-weight: bold; color: #8b5cf6;">${result.description}</div></div>`;
+                }
+                resBox.innerHTML = html;
+            } catch (err) {
+                resBox.innerHTML = `<div style="color: red;">Error: ${err.message}</div>`;
+            }
+        }
+
+        async function loadForecast() {
+            try {
+                const response = await fetch('/predict/forecast');
+                const data = await response.json();
+                const values = data.forecast;
+                const labels = Array.from({ length: 12 }, (_, i) => `Month ${i + 1}`);
+
+                const ctx = document.getElementById('forecastChart');
+                // Destroy old chart if exists
+                if (window.myChart) window.myChart.destroy();
+
+                window.myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Predicted Admissions',
+                            data: values,
+                            borderColor: '#2563eb',
+                            tension: 0.4,
+                            fill: true,
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)'
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            } catch (err) {
+                alert("Error loading forecast: " + err.message);
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# VS Code
+.vscode/
+
+# Project Specific - Generated Artifacts
+models/*.pkl
+models/metrics.json
+app/templates/validation_report.html
+
+# Mac
+.DS_Store

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: healthcare-ml-api
+    env: docker
+    plan: free
+    branch: main
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: 1

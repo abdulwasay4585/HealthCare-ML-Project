@@ -1,0 +1,17 @@
+pandas
+numpy
+scikit-learn
+fastapi
+uvicorn
+prefect
+deepchecks
+pytest
+matplotlib
+seaborn
+python-multipart
+joblib
+xgboost
+lightgbm
+statsmodels
+prophet
+jinja2
