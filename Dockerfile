@@ -12,6 +12,10 @@ COPY . .
 # This ensures a fresh set of models is baked into the image
 RUN python pipelines/train_simple.py
 
+# Generate Data Validation Report during build
+# This ensures valiation_report.html exists for the UI
+RUN python pipelines/validate_data.py
+
 # Expose port
 EXPOSE 8000
 
